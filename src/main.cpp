@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "spline.h"
 
 using namespace std;
 
@@ -85,9 +86,9 @@ int NextWaypoint(double x, double y, double theta, const vector<double> &maps_x,
 vector<double>
 getFrenet(double x, double y, double theta, const vector<double> &maps_x,
           const vector<double> &maps_y) {
-  int next_wp = NextWaypoint(x, y, theta, maps_x, maps_y);
+  size_t next_wp = NextWaypoint(x, y, theta, maps_x, maps_y);
 
-  int prev_wp;
+  size_t prev_wp;
   prev_wp = next_wp - 1;
   if (next_wp == 0) {
     prev_wp = maps_x.size() - 1;
@@ -240,6 +241,22 @@ int main() {
 
 
                 // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+
+                double dist_inc = 0.5;
+                for (int i = 0; i < 50; i++) {
+
+                  double next_s = car_s + (i + 1) * dist_inc;
+                  double next_d = 6;
+
+                  std::vector<double> xy = getXY(next_s, next_d,
+                                                    map_waypoints_s,
+                                                    map_waypoints_x,
+                                                    map_waypoints_y);
+
+                  next_x_vals.push_back(xy[0]);
+                  next_y_vals.push_back(xy[1]);
+                }
+
                 msgJson["next_x"] = next_x_vals;
                 msgJson["next_y"] = next_y_vals;
 
