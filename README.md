@@ -3,7 +3,7 @@ Self-Driving Car Engineer Nanodegree Program
 
 ## Model Documentation
 
-# Lane and LaneHandler
+## Lane and LaneHandler
 
 First I defined drivable lanes from left to right as lane 0, 1 and 2.
 Created a `Lane` class and `LaneHandler` class. 
