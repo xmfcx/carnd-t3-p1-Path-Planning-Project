@@ -1,6 +1,83 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
+
+## Model Documentation
+
+First I defined drivable lanes from left to right as lane 0, 1 and 2.
+Created a `Lane` class and `LaneHandler` class. 
+
+```
+class Lane {
+public:
+  explicit Lane(int laneNumber);
+
+  int lane;
+  bool isAvailable;
+  double nearestForwardEnemyDist;
+  double nearestForwardEnemyVelocity;
+
+  double Cost();
+};
+
+class LaneHandler {
+public:
+  std::vector<Lane> lanes;
+
+  Lane &getLane(int laneNumber);
+
+  int getLowestCostLane(int lane_car);
+};
+```
+
+And initialized my lanes at https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L266
+
+And I set the drivable and undrivable lanes in here: https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L299
+
+**For each** target car (I name them as **enemy** since we are not allowed to touch them), I do the following checks to decide whether the lane that enemy is on is drivable or not:
+* If the enemy is in front of us:
+   - If the enemy is too close, lane is not available.
+   - If enemy is closer than XX but is slover than us, lane is not available.
+   - If enemy is closer to us than the previously closest car that was marked on that lane, set that lane's `nearestForwardEnemyDist` and `nearestForwardEnemyVelocity` values.
+* If the enemy is in behind of us:
+   - If the enemy is not on our lane AND ( enemy is faster than us OR enemy is close ), lane is not available.
+
+And I created a cooldown state to stop car from doing undecisive fast unstable lane changes: https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L336
+
+Basically, If car has committed a lane change, it has to wait 4 seconds before being able to do it again.
+
+So, now that we have marked lanes as drivable or not, we can now calculate the costs of each and select the lowest cost lane.
+
+First, cost calculation:
+https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/Lane.cpp#L11
+
+I think the code is clear enough. This cost prefers the clear paths and with a small weight, favors the fast distant enemies.
+
+And choosing the lowest cost path:
+https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/LaneHandler.cpp#L13
+
+Here I only compare the costs of left, current, right lanes and return the lowest costly one.
+
+Now the decision part!
+https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L351
+
+If our current lane is not available, we will decelerate. Else, if left or right lanes are available, we will shift to the lowest costly lane.
+
+And in the end, I will calculate the drivable path and the lane shifting paths with the help of this frienly spline.h library:
+http://kluge.in-chemnitz.de/opensource/spline/spline.h
+
+And it happens starting from here:
+https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L385
+
+This part was explained in the class walkthrough.
+But basically we first generate a spline from our center to 90m front of us with 3 evenly spaced waypoints.
+And in each frame, we use points from past and current lane shift or not to calculate newer splines.
+
+And in the end, we convert them into our local coordinate frame and feed them to the simulator:
+https://github.com/xmfcx/carnd-t3-p1-Path-Planning-Project/blob/11f923bb576a2aceeefb812e4f19ec510d03a76c/src/main.cpp#L484
+
+
+
+## Actual Readme
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
